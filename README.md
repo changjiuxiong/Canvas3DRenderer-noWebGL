@@ -3,7 +3,7 @@
 #### 介绍
 javascript canvas 3D library
 javascript canvas轻量级框架
-demo地址：
+demo地址：http://changjiuxiong.gitee.io/canvas3drenderer-nowebgl/demo/index.html#demo_index
 
 #### 软件架构
 
@@ -16,7 +16,7 @@ demo地址：
 
 #### 使用说明
 
-1. demo地址：
+1. demo地址：http://changjiuxiong.gitee.io/canvas3drenderer-nowebgl/demo/index.html#demo_index
  
 #### 参与贡献
 
