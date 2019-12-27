@@ -124,7 +124,8 @@ class Renderer {
         ctx.lineTo(b1.x,b1.y);
         ctx.lineTo(c1.x,c1.y);
         ctx.closePath();
-        ctx.fill();
+        ctx.stroke();
+        // ctx.fill();
     }
 
     getAllObjList(obj, allObjList){
