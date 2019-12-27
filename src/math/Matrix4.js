@@ -809,23 +809,6 @@ Object.assign( Matrix4.prototype, {
 
 	},
 
-m4[0][0]=e[0] ;
-m4[0][1]=e[1] ;
-m4[0][2]=e[2] ;
-m4[0][3]=e[3] ;
-m4[1][0]=e[4] ;
-m4[1][1]=e[5] ;
-m4[1][2]=e[6] ;
-m4[1][3]=e[7] ;
-m4[2][0]=e[8] ;
-m4[2][1]=e[9] ;
- m4[2][2]=e[10];
- m4[2][3]=e[11];
- m4[3][0]=e[12];
- m4[3][1]=e[13];
- m4[3][2]=e[14];
- m4[3][3]=e[15];
-
 	getInverse: function ( m, throwOnDegenerate ) {
 
 		// based on http://www.euclideanspace.com/maths/algebra/matrix/functions/inverse/fourD/index.htm

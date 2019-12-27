@@ -16,10 +16,6 @@ class Renderer {
     constructor(param) {
         var that = this;
         param = param || {};
-        this.useShadow = param.useShadow == undefined ? true : param.useShadow;
-        this.useSkyBox = param.useSkyBox == undefined ? false : param.useSkyBox;
-        this.skyBox = param.skyBox || [];
-        this.useScheme = param.useScheme;
         this.bufferList = [];
 
         // this.programList = [];
@@ -33,150 +29,6 @@ class Renderer {
 
         var canvas = document.getElementById('webgl');
         var gl = this.gl = canvas.getContext('webgl');
-        // var gl = this.gl = Util.getWebGLContext(canvas);
-        if (!gl) {
-            console.log('Failed to get the rendering context for WebGL');
-            return;
-        }
-
-
-        this.shadowBufferSize = Math.pow(2, 12);
-        // Vertex shader program for generating a shadow map
-        var SHADOW_VSHADER_SOURCE =
-            'precision highp int;\n' +
-            'precision highp float;\n' +
-            'attribute vec4 a_Position;\n' +
-            'uniform mat4 u_MvMatrix;\n' +
-            'uniform mat4 u_PMatrix;\n' +
-            'void main() {\n' +
-            '  gl_Position = u_PMatrix * u_MvMatrix * a_Position;\n' +
-            '}\n';
-
-        // Fragment shader program for generating a shadow map
-        var SHADOW_FSHADER_SOURCE =
-            'precision highp int;\n' +
-            'precision highp float;\n' +
-            'void main() {\n' +
-            '  const vec4 bitShift = vec4(1.0, 256.0, 256.0 * 256.0, 256.0 * 256.0 * 256.0);\n' +
-            '  const vec4 bitMask = vec4(1.0/256.0, 1.0/256.0, 1.0/256.0, 0.0);\n' +
-            '  vec4 rgbaDepth = fract(gl_FragCoord.z * bitShift);\n' + // Calculate the value stored into each byte
-            '  rgbaDepth -= rgbaDepth.gbaa * bitMask;\n' + // Cut off the value which do not fit in 8 bits
-            '  gl_FragColor = rgbaDepth;\n' +
-            // '  gl_FragColor = vec4(gl_FragCoord.z, 0.0, 0.0, 1.0);\n' + // Write the z-value in R
-
-            '}\n';
-
-        var shadowProgram = this.shadowProgram = Util.createProgram(gl, SHADOW_VSHADER_SOURCE, SHADOW_FSHADER_SOURCE);
-
-        var shadow_fbo = this.shadow_fbo = this.initFramebufferObject(gl, this.shadowBufferSize);
-        if (!shadow_fbo) {
-            console.log('Failed to initialize shadow_fbo');
-            return;
-        }
-
-        var composer = new Composer();
-        var composerProgram = this.composerProgram = Util.createProgram(gl, composer.vertexShader, composer.fragmentShader);
-
-        var composerOther = new ComposerOthers();
-        var composerOtherProgram = this.composerOtherProgram = Util.createProgram(gl, composerOther.vertexShader, composerOther.fragmentShader);
-
-        var composerScheme = new ComposerScheme();
-        var composerSchemeProgram = this.composerSchemeProgram = Util.createProgram(gl, composerScheme.vertexShader, composerScheme.fragmentShader);
-
-        var scheme_fbo = this.scheme_fbo = this.initFramebufferObject(gl, 600);
-        if (!scheme_fbo) {
-            console.log('Failed to initialize scheme_fbo');
-            return;
-        }
-
-        //-----------------------------skyBox
-
-        var SKY_VSHADER =
-            'attribute vec4 a_position;\n' +
-            'varying vec4 v_position;\n' +
-            'void main() {\n' +
-            '  v_position = a_position;\n' +
-            '  gl_Position = a_position;\n' +
-            '  gl_Position.z = 0.99;\n' +
-
-            '}\n';
-
-        var SKY_FSHADER =
-            'precision mediump float;\n' +
-            'uniform samplerCube u_skybox;\n' +
-            'uniform mat4 u_viewDirectionProjectionInverse;\n' +
-            'varying vec4 v_position;\n' +
-            'void main() {\n' +
-            '  vec4 t = u_viewDirectionProjectionInverse * v_position;\n' +
-            '  gl_FragColor = textureCube(u_skybox, normalize(t.xyz / t.w));\n' +
-            '}\n';
-
-        this.sky_loadCount = 0;
-
-        that.sky_texture = gl.createTexture();
-
-        gl.activeTexture(gl.TEXTURE8);
-        gl.bindTexture(gl.TEXTURE_CUBE_MAP, that.sky_texture);
-
-        var faceInfos = [
-            {
-                target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
-                url:that.skyBox[0],
-                // url: './skyBox/sky1/pos-x.jpg'
-            },
-            {
-                target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-                url:that.skyBox[1],
-                // url: './skyBox/sky1/neg-x.jpg'
-            },
-            {
-                target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-                url:that.skyBox[2],
-                // url: './skyBox/sky1/pos-y.jpg'
-            },
-            {
-                target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-                url:that.skyBox[3],
-                // url: './skyBox/sky1/neg-y.jpg'
-            },
-            {
-                target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
-                url:that.skyBox[4],
-                // url: './skyBox/sky1/pos-z.jpg'
-            },
-            {
-                target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
-                url:that.skyBox[5],
-                // url: './skyBox/sky1/neg-z.jpg'
-            },
-        ];
-
-        if(that.useSkyBox){
-            faceInfos.forEach((faceInfo) => {
-                const {target, url} = faceInfo;
-
-                const level = 0;
-                const internalFormat = gl.RGBA;
-                const format = gl.RGBA;
-                const type = gl.UNSIGNED_BYTE;
-
-                // Asynchronously load an image
-                const image = new Image();
-                image.src = url;
-                image.addEventListener('load', function() {
-                    // Now that the image has loaded make copy it to the texture.
-                    gl.bindTexture(gl.TEXTURE_CUBE_MAP, that.sky_texture);
-                    gl.texImage2D(target, level, internalFormat, format, type, image);
-                    // gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
-                    that.sky_loadCount ++;
-
-                });
-            });
-        }
-
-        var skyProgram = this.skyProgram = Util.createProgram(gl, SKY_VSHADER, SKY_FSHADER);
-
-
 
         //-----------------------
         gl.enable(gl.CULL_FACE);
@@ -185,65 +37,6 @@ class Renderer {
         // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
-    }
-
-    initFramebufferObject(gl, size) {
-        var framebuffer, texture, depthBuffer;
-
-        // Define the error handling function
-        var error = function() {
-            if (framebuffer) gl.deleteFramebuffer(framebuffer);
-            if (texture) gl.deleteTexture(texture);
-            if (depthBuffer) gl.deleteRenderbuffer(depthBuffer);
-            return null;
-        }
-
-        // Create a framebuffer object (FBO)
-        framebuffer = gl.createFramebuffer();
-        if (!framebuffer) {
-            console.log('Failed to create frame buffer object');
-            return error();
-        }
-
-        // Create a texture object and set its size and parameters
-        texture = gl.createTexture(); // Create a texture object
-        if (!texture) {
-            console.log('Failed to create texture object');
-            return error();
-        }
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, size, size, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-
-
-        // Create a renderbuffer object and Set its size and parameters
-        depthBuffer = gl.createRenderbuffer(); // Create a renderbuffer object
-        if (!depthBuffer) {
-            console.log('Failed to create renderbuffer object');
-            return error();
-        }
-        gl.bindRenderbuffer(gl.RENDERBUFFER, depthBuffer);
-        gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, size, size);
-
-        // Attach the texture and the renderbuffer object to the FBO
-        gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-        gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depthBuffer);
-
-        // Check if FBO is configured correctly
-        var e = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
-        if (gl.FRAMEBUFFER_COMPLETE !== e) {
-            console.log('Frame buffer object is incomplete: ' + e.toString());
-            return error();
-        }
-
-        framebuffer.texture = texture; // keep the required object
-
-        // Unbind the buffer object
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.bindTexture(gl.TEXTURE_2D, null);
-        gl.bindRenderbuffer(gl.RENDERBUFFER, null);
-
-        return framebuffer;
     }
 
     getProgramByVF(v, f){
@@ -303,47 +96,6 @@ class Renderer {
         gl.program = program;
     }
 
-    renderDepthOneMesh(mesh, camera, ambientLight, directionalLight){
-        var that = this;
-
-        var mesh = mesh || new Mesh();
-        var geometry = mesh.geometry;
-
-
-        var gl = that.gl;
-
-        var bufferShadow = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, bufferShadow);
-        gl.bufferData(gl.ARRAY_BUFFER, geometry.buffer, gl.STATIC_DRAW);
-        var bufferFSIZE = geometry.buffer.BYTES_PER_ELEMENT;
-
-        var a_Position = gl.getAttribLocation(that.shadowProgram, 'a_Position');
-        gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, bufferFSIZE * 8, bufferFSIZE * 0);
-        gl.enableVertexAttribArray(a_Position);
-
-
-        var indexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, geometry.indices, gl.STATIC_DRAW);
-
-
-        var u_MvMatrix = gl.getUniformLocation(that.shadowProgram, 'u_MvMatrix');
-        var mvMatrix = mesh.matrixWorld;
-        gl.uniformMatrix4fv(u_MvMatrix, false, mvMatrix.elements);
-
-        var ca = that.getCameraLight(directionalLight);
-
-        var u_PMatrix = gl.getUniformLocation(that.shadowProgram, 'u_PMatrix');
-        // var u_PMatrixFromLight = ca.VPmatrix;
-        gl.uniformMatrix4fv(u_PMatrix, false, ca.VPmatrix.elements);
-
-        gl.drawElements(gl.TRIANGLES, geometry.indices.length, gl.UNSIGNED_SHORT, 0);
-
-        gl.deleteBuffer(bufferShadow);
-        gl.deleteBuffer(indexBuffer);
-
-    }
-
     getCameraLight(directionalLight){
         var cameraLight = new COOL.OrthoCamera(-100, 100, -100, 100, 0, 300);
         // var cameraLight = new COOL.Camera(30,1,1,10);
@@ -357,68 +109,11 @@ class Renderer {
         return cameraLight;
     }
 
-    renderSkyBox(camera){
-        var that = this;
-        var gl = that.gl;
-
-        if(that.sky_loadCount != 6){
-            return;
-        }
-        gl.useProgram(that.skyProgram);
-        gl.viewport(0, 0, 600, 600);
-
-        var program = that.skyProgram;
-
-        var positionLocation = gl.getAttribLocation(program, "a_position");
-        var skyboxLocation = gl.getUniformLocation(program, "u_skybox");
-        var viewDirectionProjectionInverseLocation = gl.getUniformLocation(program, "u_viewDirectionProjectionInverse");
-        var positionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-        var positions = new Float32Array(
-            [
-                -1, -1,
-                1, -1,
-                -1,  1,
-                -1,  1,
-                1, -1,
-                1,  1,
-            ]);
-        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
-
-        var size = 2;          // 2 components per iteration
-        var type = gl.FLOAT;   // the data is 32bit floats
-        var normalize = false; // don't normalize the data
-        var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-        var offset = 0;        // start at the beginning of the buffer
-        gl.vertexAttribPointer(positionLocation, size, type, normalize, stride, offset);
-        gl.enableVertexAttribArray(positionLocation);
-
-        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-        var cameraPositionV3 = new Vector3().fromArray(camera.position).normalize();
-        var projectionMatrix = new Matrix4().setPerspective(30, 1, 1, 2000);
-        var cameraMatrix = new Matrix4().setLookAt(cameraPositionV3.x, cameraPositionV3.y, cameraPositionV3.z, 0, 0, 0, 0, 1, 0);
-        // var viewMatrix = cameraMatrix.invert();
-        var viewMatrix = cameraMatrix;
-        var viewDirectionProjectionMatrix = projectionMatrix.multiply(viewMatrix);
-        var viewDirectionProjectionInverseMatrix = viewDirectionProjectionMatrix.invert();
-        gl.uniformMatrix4fv(viewDirectionProjectionInverseLocation, false, viewDirectionProjectionInverseMatrix.elements);
-
-        gl.uniform1i(skyboxLocation, 8);
-        gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
-
-    }
-
     render(scene, camera){
         var that = this;
         that.curCameraPosition = camera.position;
 
         var renderList = that.sortRenderList(scene);
-        var useScheme = that.useScheme;
 
         var gl = that.gl;
         gl.enable(gl.DEPTH_TEST);
@@ -439,21 +134,8 @@ class Renderer {
             }
         }
 
-        that.useShadow = directionalLight ? that.useShadow : false;
-
         ambientLight = ambientLight || new AmbientLight({intensity:0});
         directionalLight = directionalLight || new DirectionalLight({intensity:0});
-
-        if(that.useShadow){
-            gl.useProgram(that.shadowProgram);
-            gl.bindFramebuffer(gl.FRAMEBUFFER, that.shadow_fbo);
-            gl.viewport(0, 0, this.shadowBufferSize, this.shadowBufferSize);
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            gl.disable (gl.BLEND);
-            for(var i in renderList){
-                this.renderDepthOneMesh(renderList[i], camera, ambientLight, directionalLight);
-            }
-        }
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.viewport(0, 0, 600, 600);
@@ -462,160 +144,6 @@ class Renderer {
         for(var i in renderList){
             this.renderOneMesh(renderList[i], camera, ambientLight, directionalLight);
         }
-
-        //scheme
-        if(useScheme) {
-            gl.bindFramebuffer(gl.FRAMEBUFFER, that.scheme_fbo);
-            gl.viewport(0, 0, 600, 600);
-            gl.disable(gl.BLEND);
-            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            for (var i in renderList) {
-                if (renderList[i].effect) {
-                    useScheme = true;
-                    this.renderSchemeMesh(renderList[i], camera, ambientLight, directionalLight);
-                } else {
-                    this.renderOtherMesh(renderList[i], camera, ambientLight, directionalLight);
-                }
-
-            }
-        }
-
-        //composer
-        if(useScheme){
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-            gl.viewport(0, 0, 600, 600);
-            gl.enable (gl.BLEND);
-            this.renderComposer();
-        }
-
-    }
-
-    renderComposer(){
-        var that = this;
-        var gl = that.gl;
-
-        gl.useProgram(that.composerProgram);
-        gl.viewport(0, 0, 600, 600);
-
-        var program = that.composerProgram;
-
-        var a_Position = gl.getAttribLocation(program, "a_Position");
-        var a_TexCoord = gl.getAttribLocation(program, "a_TexCoord");
-
-        var positionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-        var positions = new Float32Array(
-            [
-                -1, -1, 0,0,
-                1, -1,  1,0,
-                -1,  1, 0,1,
-                -1,  1, 0,1,
-                1, -1,  1,0,
-                1,  1,  1,1
-            ]);
-        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
-
-        var bufferFSIZE = positions.BYTES_PER_ELEMENT;
-
-        gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, bufferFSIZE*4, bufferFSIZE*0);
-        gl.enableVertexAttribArray(a_Position);
-
-        gl.vertexAttribPointer(a_TexCoord, 2, gl.FLOAT, false, bufferFSIZE*4, bufferFSIZE*2);
-        gl.enableVertexAttribArray(a_TexCoord);
-
-        gl.activeTexture(gl.TEXTURE5);
-        gl.bindTexture(gl.TEXTURE_2D, that.scheme_fbo.texture);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, COOL.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, COOL.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, COOL.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, COOL.CLAMP_TO_EDGE);
-        var tDiffuse = gl.getUniformLocation(program, "tDiffuse");
-        gl.uniform1i(tDiffuse, 5);
-        gl.drawArrays(gl.TRIANGLES, 0, 1 * 6);
-    }
-
-    renderOtherMesh(mesh, camera, ambientLight, directionalLight){
-        var that = this;
-
-        var mesh = mesh || new Mesh();
-        var geometry = mesh.geometry;
-        var material = mesh.material;
-        var map = material.map;
-        var color = material.color;
-
-        var gl = that.gl;
-
-        gl.useProgram(that.composerOtherProgram);
-
-        var bufferMesh = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, bufferMesh);
-        gl.bufferData(gl.ARRAY_BUFFER, geometry.buffer, gl.STATIC_DRAW);
-        var bufferFSIZE = geometry.buffer.BYTES_PER_ELEMENT;
-
-        var a_Position = gl.getAttribLocation(that.composerOtherProgram, 'a_Position');
-        gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, bufferFSIZE * 8, bufferFSIZE * 0);
-        gl.enableVertexAttribArray(a_Position);
-
-        var indexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, geometry.indices, gl.STATIC_DRAW);
-
-        var u_MvMatrix = gl.getUniformLocation(that.composerOtherProgram, 'u_MvMatrix');
-        var mvMatrix = mesh.matrixWorld;
-        gl.uniformMatrix4fv(u_MvMatrix, false, mvMatrix.elements);
-
-        var u_PMatrix = gl.getUniformLocation(that.composerOtherProgram, 'u_PMatrix');
-        var PMatrix = camera.VPmatrix;
-        gl.uniformMatrix4fv(u_PMatrix, false, PMatrix.elements);
-
-        var model = material.wireframe ? gl.LINE_STRIP : gl.TRIANGLES;
-        gl.drawElements(model, geometry.indices.length, gl.UNSIGNED_SHORT, 0);
-
-        gl.deleteBuffer(bufferMesh);
-        gl.deleteBuffer(indexBuffer);
-
-    }
-
-    renderSchemeMesh(mesh, camera, ambientLight, directionalLight){
-        var that = this;
-
-        var mesh = mesh || new Mesh();
-        var geometry = mesh.geometry;
-        var material = mesh.material;
-        var map = material.map;
-        var color = material.color;
-
-        var gl = that.gl;
-
-        gl.useProgram(that.composerSchemeProgram);
-
-        var bufferMesh = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, bufferMesh);
-        gl.bufferData(gl.ARRAY_BUFFER, geometry.buffer, gl.STATIC_DRAW);
-        var bufferFSIZE = geometry.buffer.BYTES_PER_ELEMENT;
-
-        var a_Position = gl.getAttribLocation(that.composerSchemeProgram, 'a_Position');
-        gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, bufferFSIZE * 8, bufferFSIZE * 0);
-        gl.enableVertexAttribArray(a_Position);
-
-        var indexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, geometry.indices, gl.STATIC_DRAW);
-
-        var u_MvMatrix = gl.getUniformLocation(that.composerSchemeProgram, 'u_MvMatrix');
-        var mvMatrix = mesh.matrixWorld;
-        gl.uniformMatrix4fv(u_MvMatrix, false, mvMatrix.elements);
-
-        var u_PMatrix = gl.getUniformLocation(that.composerSchemeProgram, 'u_PMatrix');
-        var PMatrix = camera.VPmatrix;
-        gl.uniformMatrix4fv(u_PMatrix, false, PMatrix.elements);
-
-        var model = material.wireframe ? gl.LINE_STRIP : gl.TRIANGLES;
-        gl.drawElements(model, geometry.indices.length, gl.UNSIGNED_SHORT, 0);
-
-        gl.deleteBuffer(bufferMesh);
-        gl.deleteBuffer(indexBuffer);
 
     }
 
@@ -861,12 +389,6 @@ class Renderer {
             var bb = this.bufferList.shift();
             this.gl.deleteBuffer(bb);
         }
-    }
-
-    setSkyBox(skyBox){
-        var that = this;
-        that.skyBox = skyBox;
-        that.useSkyBox = true;
     }
 
     getAllObjList(obj, allObjList){
