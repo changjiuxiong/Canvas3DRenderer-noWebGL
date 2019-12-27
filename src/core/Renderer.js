@@ -1,16 +1,9 @@
-import Geometry from "./Geometry.js";
+
 import Mesh from "./Mesh.js";
-import {Matrix4} from "../math/Matrix4.js";
-import Camera from "../camera/Camera";
 import Util from "../util/Util";
 import AmbientLight from "../light/AmbientLight";
 import DirectionalLight from "../light/DirectionalLight";
 import {Vector3} from "../math/Vector3";
-import Composer from "../composer/Composer";
-import ComposerOthers from "../composer/ComposerOthers";
-import ComposerScheme from "../composer/ComposerScheme";
-
-// import md5 from 'js-md5';
 
 class Renderer {
     constructor(param) {
@@ -18,7 +11,6 @@ class Renderer {
         param = param || {};
         this.bufferList = [];
 
-        // this.programList = [];
         this.programList = {};
 
         this.curCameraPosition = null;
@@ -98,7 +90,7 @@ class Renderer {
 
     getCameraLight(directionalLight){
         var cameraLight = new COOL.OrthoCamera(-100, 100, -100, 100, 0, 300);
-        // var cameraLight = new COOL.Camera(30,1,1,10);
+
         var caPos = directionalLight.direction;
         caPos = caPos.map(function (item) {
             return item * 100;
@@ -182,15 +174,6 @@ class Renderer {
             fDef += '#define USE_Map\n';
         }
 
-        if(envMap && envMap.imgReady){
-            vDef += '#define USE_envMap\n';
-            fDef += '#define USE_envMap\n';
-        }
-
-        if(that.useShadow){
-            vDef += '#define USE_Shadow\n';
-            fDef += '#define USE_Shadow\n';
-        }
 
         v = vDef + v;
         f = fDef + f;
@@ -263,24 +246,6 @@ class Renderer {
         var PMatrix = camera.VPmatrix;
         gl.uniformMatrix4fv(u_PMatrix, false, PMatrix.elements);
 
-        if(v.indexOf('#define USE_Shadow')!=-1){
-            var ca = that.getCameraLight(directionalLight);
-            var u_PMatrixFromLight = gl.getUniformLocation(gl.program, 'u_PMatrixFromLight');
-            gl.uniformMatrix4fv(u_PMatrixFromLight, false, ca.VPmatrix.elements);
-
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, that.shadow_fbo.texture);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, COOL.LINEAR);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, COOL.LINEAR);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, COOL.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, COOL.CLAMP_TO_EDGE);
-            var u_ShadowMap = gl.getUniformLocation(gl.program, 'u_ShadowMap');
-            gl.uniform1i(u_ShadowMap, 0);
-        }
-
-
-
-
         if(f.indexOf('#define USE_Map')!=-1){
 
             var texture = that.texture = gl.createTexture();   // Create a texture object
@@ -302,74 +267,12 @@ class Renderer {
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, map.image);
         }
 
-        if(f.indexOf('#define USE_envMap')!=-1){
-
-            var texture = that.env_texture = gl.createTexture();
-            gl.activeTexture(gl.TEXTURE7);
-            gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
-
-            var images = envMap.images;
-            var faceInfos = [
-                {
-                    target: gl.TEXTURE_CUBE_MAP_POSITIVE_X,
-                    image:images[0],
-                },
-                {
-                    target: gl.TEXTURE_CUBE_MAP_NEGATIVE_X,
-                    image:images[1],
-                },
-                {
-                    target: gl.TEXTURE_CUBE_MAP_POSITIVE_Y,
-                    image:images[2],
-                },
-                {
-                    target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,
-                    image:images[3],
-                },
-                {
-                    target: gl.TEXTURE_CUBE_MAP_POSITIVE_Z,
-                    image:images[4],
-                },
-                {
-                    target: gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,
-                    image:images[5],
-                },
-            ];
-
-            faceInfos.forEach((faceInfo) => {
-                const {target, image} = faceInfo;
-
-                const level = 0;
-                const internalFormat = gl.RGBA;
-                const format = gl.RGBA;
-                const type = gl.UNSIGNED_BYTE;
-
-                gl.bindTexture(gl.TEXTURE_CUBE_MAP, texture);
-                gl.texImage2D(target, level, internalFormat, format, type, image);
-
-            });
-
-            gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MIN_FILTER, envMap.magFilter);
-            gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_MAG_FILTER, envMap.minFilter);
-            gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_S, envMap.wrapS);
-            gl.texParameteri(gl.TEXTURE_CUBE_MAP, gl.TEXTURE_WRAP_T, envMap.wrapT);
-
-            var u_envMap = gl.getUniformLocation(gl.program, "u_envMap");
-            gl.uniform1i(u_envMap, 7);
-
-
-        }
-
         var model = material.wireframe ? gl.LINE_STRIP : gl.TRIANGLES;
         gl.drawElements(model, geometry.indices.length, gl.UNSIGNED_SHORT, 0);
 
         if(that.texture){
             gl.deleteTexture(that.texture);
             that.texture = null;
-        }
-        if(that.env_texture){
-            gl.deleteTexture(that.env_texture);
-            that.env_texture = null;
         }
 
         // gl.deleteBuffer(bufferMesh);
@@ -414,22 +317,6 @@ class Renderer {
             allObjList[i].distanceToCamera = da;
         }
         var allObjSortedList = allObjList.sort(that.sortFun);
-        // var opacityList = [];
-        // var transparentList = [];
-        //
-        // for(var i in allObjSortedList){
-        //     if(allObjSortedList[i].material.transparent){
-        //         transparentList.push(allObjSortedList[i]);
-        //     }else {
-        //         opacityList.push(allObjSortedList[i]);
-        //     }
-        // }
-        //
-        // that.renderList = {
-        //     opacityList: opacityList,
-        //     transparentList: transparentList
-        // };
-
         return allObjSortedList;
     }
 

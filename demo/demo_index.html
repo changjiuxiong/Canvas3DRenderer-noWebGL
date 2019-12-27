@@ -85,7 +85,6 @@ var scene = new COOL.Scene();
     scene.add(mesh3);
     scene.add(meshSphere);
 
-//scene.add(mesh2);
 
     var ambientLight = new COOL.AmbientLight({intensity: 0.6});
     scene.add(ambientLight);
@@ -94,7 +93,6 @@ var scene = new COOL.Scene();
     scene.add(directionalLight);
 
     var camera = new COOL.Camera(30,1,1,1000);
-//    var camera = new COOL.OrthoCamera(-10, 10, -10, 10, 0, 100000);
 
     camera.setPosition([5, 8, 35]);
 
@@ -102,35 +100,8 @@ var scene = new COOL.Scene();
     cameraController.update();
 
     var renderer = new COOL.Renderer({
-        useShadow:true,
-//        skyBox:[
-//            './skyBox/sky2/1_LF.jpg',
-//            './skyBox/sky2/1_DN.jpg',
-//            './skyBox/sky2/1_FR.jpg',
-//            './skyBox/sky2/1_RT.jpg',
-//            './skyBox/sky2/1_UP.jpg',
-//            './skyBox/sky2/1_BK.jpg',
-//        ],
-        skyBox:[
-            './skyBox/sky2/1_RT.jpg',
-            './skyBox/sky2/1_LF.jpg',
-            './skyBox/sky2/1_UP.jpg',
-            './skyBox/sky2/1_DN.jpg',
-            './skyBox/sky2/1_BK.jpg',
-            './skyBox/sky2/1_FR.jpg',
-        ],
-        useSkyBox:true,
-    });
-    /*
-    * px
-    * nx
-    * py
-    * ny
-    * pz
-    * nz
-    *
-    * */
 
+    });
 
     var loader = new COOL.GLTFLoader2();
     loader.load( "./models/gltf/girl.gltf", function( gltf ) {
@@ -167,25 +138,17 @@ function createPanel() {
     var folder1 = panel.addFolder( '选项' );
 
     var settings = {
-        '阴影': true,
         '环境光': 0.6,
         '平行光': 1,
-        '天空盒': true
     };
 
-    folder1.add( settings, '阴影' ).onChange( showShadow );
     folder1.add( settings, '环境光', 0, 1.5  ).onChange( changeAmb);
     folder1.add( settings, '平行光', 0, 1.5  ).onChange( changeDir);
-    folder1.add( settings, '天空盒').onChange( showSkyBox );
-
     folder1.open();
 
 }
 createPanel();
 
-function showShadow(v) {
-    renderer.useShadow = v;
-}
 
 function changeAmb(v) {
     ambientLight.intensity = v;
@@ -195,9 +158,6 @@ function changeDir(v) {
     directionalLight.intensity = v;
 }
 
-function showSkyBox(v) {
-    renderer.useSkyBox = v;
-}
 
 </script>
 </html>
