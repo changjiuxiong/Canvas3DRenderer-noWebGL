@@ -4,6 +4,8 @@ import Util from "../util/Util";
 import AmbientLight from "../light/AmbientLight";
 import DirectionalLight from "../light/DirectionalLight";
 import {Vector3} from "../math/Vector3";
+import {Vector4} from "../math/Vector4";
+import {Vector2} from "../math/Vector2";
 
 class Renderer {
     constructor(param) {
@@ -19,88 +21,24 @@ class Renderer {
             transparentList:[]
         };
 
+        this.camera = null;
+
         var canvas = document.getElementById('webgl');
-        var gl = this.gl = canvas.getContext('webgl');
-
-        //-----------------------
-        gl.enable(gl.CULL_FACE);
-        gl.enable(gl.DEPTH_TEST);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        // gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        var gl = this.gl = canvas.getContext('2d');
 
     }
 
-    getProgramByVF(v, f){
-        var that = this;
-        var gl = that.gl;
-
-        var vertexShader = this.vshader = Util.loadShader(gl, gl.VERTEX_SHADER, v);
-        var fragmentShader = this.fshader = Util.loadShader(gl, gl.FRAGMENT_SHADER, f);
-        if (!vertexShader || !fragmentShader) {
-            return null;
-        }
-
-        var program = gl.createProgram();
-        if (!program) {
-            return null;
-        }
-
-        gl.attachShader(program, vertexShader);
-        gl.attachShader(program, fragmentShader);
-
-        gl.linkProgram(program);
-        var linked = gl.getProgramParameter(program, gl.LINK_STATUS);
-        if (!linked) {
-            var error = gl.getProgramInfoLog(program);
-            console.log('Failed to link program: ' + error);
-            gl.deleteProgram(program);
-            gl.deleteShader(fragmentShader);
-            gl.deleteShader(vertexShader);
-            return null;
-        }
-
-        return program;
-    }
-
-    setProgram(v, f){
-        var that = this;
-        var gl = that.gl;
-
-        // if (!Util.initShaders(gl, v, f)) {
-        //     console.log('Failed to intialize shaders.');
-        //     return;
-        // }
-
-        var md5vf = (v+f);
-        var prog = that.programList[md5vf];
-        if(prog){
-            gl.useProgram(prog);
-            gl.program = prog;
-            return;
-        }
-
-        var program = that.getProgramByVF(v,f);
-
-        that.programList[md5vf] = program;
-
-        gl.useProgram(program);
-        gl.program = program;
-    }
 
     render(scene, camera){
         var that = this;
+        that.camera = camera;
         that.curCameraPosition = camera.position;
 
         var renderList = that.sortRenderList(scene);
 
         var gl = that.gl;
-        gl.enable(gl.DEPTH_TEST);
 
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        if(that.useSkyBox){
-            this.renderSkyBox(camera);
-        }
+        gl.clearRect(0,0,600,600);
 
         var ambientLight = null;
         var directionalLight = null;
@@ -116,10 +54,6 @@ class Renderer {
         ambientLight = ambientLight || new AmbientLight({intensity:0});
         directionalLight = directionalLight || new DirectionalLight({intensity:0});
 
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.viewport(0, 0, 600, 600);
-        gl.enable (gl.BLEND);
-        // gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         for(var i in renderList){
             this.renderOneMesh(renderList[i], camera, ambientLight, directionalLight);
         }
@@ -131,153 +65,66 @@ class Renderer {
 
         var mesh = mesh || new Mesh();
         var geometry = mesh.geometry;
+        var indices = geometry.indices;
+        var vertices = geometry.vertices;
+
+
         var material = mesh.material;
         var map = material.map;
         var color = material.color;
 
-        var v = material.vshaderSource;
-        var f = material.fshaderSource;
+        var ctx = that.gl;
 
-        var vDef = '';
-        var fDef = '';
-        if(material.type == 'MeshLambertMaterial'){
-            fDef += '#define USE_AmbientLight\n';
-            fDef += '#define USE_DirectionalLight\n';
+        for(var i=0; i<indices.length; i+=3){
+            var point1x = vertices[indices[i]*3];
+            var point1y = vertices[indices[i]*3+1];
+            var point1z = vertices[indices[i]*3+2];
 
-        }else if(material.type == 'MeshStandardMaterial'){
+            var point2x = vertices[indices[i+1]*3];
+            var point2y = vertices[indices[i+1]*3+1];
+            var point2z = vertices[indices[i+1]*3+2];
 
-            fDef += '#define USE_AmbientLight\n';
+            var point3x = vertices[indices[i+2]*3];
+            var point3y = vertices[indices[i+2]*3+1];
+            var point3z = vertices[indices[i+2]*3+2];
 
-            vDef += '#define USE_SColor\n';
-
-            fDef += '#define USE_DirectionalLight\n';
-            fDef += '#define USE_SColor\n';
-
-
+            that.drawTriangle(
+                new Vector3().fromArray([point1x,point1y,point1z]),
+                new Vector3().fromArray([point2x,point2y,point2z]),
+                new Vector3().fromArray([point3x,point3y,point3z]),
+                mesh
+            );
         }
-
-        if(map && map.image && map.image.width  && map.image.height){
-            fDef += '#define USE_Map\n';
-        }
-
-
-        v = vDef + v;
-        f = fDef + f;
-
-        this.setProgram(v,f);
-
-        var gl = that.gl;
-
-        var bufferMesh = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, bufferMesh);
-        gl.bufferData(gl.ARRAY_BUFFER, geometry.buffer, gl.STATIC_DRAW);
-        var bufferFSIZE = geometry.buffer.BYTES_PER_ELEMENT;
-
-        var a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-        gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, bufferFSIZE * 8, bufferFSIZE * 0);
-        gl.enableVertexAttribArray(a_Position);
-
-        var a_Normal = gl.getAttribLocation(gl.program, 'a_Normal');
-        gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, bufferFSIZE * 8, bufferFSIZE * 3);
-        gl.enableVertexAttribArray(a_Normal);
-
-        var a_TexCoord = gl.getAttribLocation(gl.program, 'a_TexCoord');
-        gl.vertexAttribPointer(a_TexCoord, 2, gl.FLOAT, false, bufferFSIZE * 8, bufferFSIZE * 6);
-        gl.enableVertexAttribArray(a_TexCoord);
-
-
-        var indexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, geometry.indices, gl.STATIC_DRAW);
-
-        var u_Color = gl.getUniformLocation(gl.program, 'u_Color');
-        gl.uniform4f(u_Color, color[0], color[1], color[2], color[3]);
-
-        var u_Metalness = gl.getUniformLocation(gl.program, 'u_Metalness');
-        gl.uniform1f(u_Metalness, material.metalness);
-
-        if(f.indexOf('#define USE_SColor')!=-1 || f.indexOf('#define USE_envMap')!=-1){
-            var u_Camera_Position = gl.getUniformLocation(gl.program, 'u_Camera_Position');
-            gl.uniform3f(u_Camera_Position, camera.position[0], camera.position[1], camera.position[2]);
-        }
-
-        if(f.indexOf('#define USE_AmbientLight')!=-1){
-            var u_AmbientLight_Color = gl.getUniformLocation(gl.program, 'u_AmbientLight_Color');
-            var ambientLightColor = ambientLight.color;
-            ambientLightColor = ambientLightColor.map(function (item) {
-                return ambientLight.intensity * item;
-            });
-            gl.uniform3f(u_AmbientLight_Color, ambientLightColor[0], ambientLightColor[1], ambientLightColor[2]);
-        }
-
-        if(f.indexOf('#define USE_DirectionalLight')!=-1){
-            var u_DirectionalLight_Direction = gl.getUniformLocation(gl.program, 'u_DirectionalLight_Direction');
-            var directionalLight_Direction = directionalLight.direction;
-            gl.uniform3f(u_DirectionalLight_Direction, directionalLight_Direction[0], directionalLight_Direction[1], directionalLight_Direction[2]);
-
-            var u_DirectionalLight_Color = gl.getUniformLocation(gl.program, 'u_DirectionalLight_Color');
-            var directionalLight_Color = directionalLight.color;
-            directionalLight_Color = directionalLight_Color.map(function (item) {
-                return directionalLight.intensity * item;
-            });
-            gl.uniform3f(u_DirectionalLight_Color, directionalLight_Color[0], directionalLight_Color[1], directionalLight_Color[2]);
-        }
-
-
-        var u_MvMatrix = gl.getUniformLocation(gl.program, 'u_MvMatrix');
-        var mvMatrix = mesh.matrixWorld;
-        gl.uniformMatrix4fv(u_MvMatrix, false, mvMatrix.elements);
-
-        var u_PMatrix = gl.getUniformLocation(gl.program, 'u_PMatrix');
-        var PMatrix = camera.VPmatrix;
-        gl.uniformMatrix4fv(u_PMatrix, false, PMatrix.elements);
-
-        if(f.indexOf('#define USE_Map')!=-1){
-
-            var texture = that.texture = gl.createTexture();   // Create a texture object
-            // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1); // Flip the image's y axis
-
-            gl.activeTexture(gl.TEXTURE1); //必须在bindTexture之前
-            gl.bindTexture(gl.TEXTURE_2D, texture);
-
-            var u_Sampler = gl.getUniformLocation(gl.program, 'u_Sampler');
-            gl.uniform1i(u_Sampler, 1);
-
-            // Set the texture parameters
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, map.magFilter);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, map.minFilter);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, map.wrapS);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, map.wrapT);
-
-            // Set the texture image
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, map.image);
-        }
-
-        var model = material.wireframe ? gl.LINE_STRIP : gl.TRIANGLES;
-        gl.drawElements(model, geometry.indices.length, gl.UNSIGNED_SHORT, 0);
-
-        if(that.texture){
-            gl.deleteTexture(that.texture);
-            that.texture = null;
-        }
-
-        // gl.deleteBuffer(bufferMesh);
-        that.addBuffer(bufferMesh);
-        gl.deleteBuffer(indexBuffer);
-
-        gl.deleteShader(that.vshader);
-        gl.deleteShader(that.fshader);
-        // gl.deleteProgram(gl.program);
 
     }
 
-    addBuffer(buffer){
-        //这个buffer不能立即删除，删了下一帧没深度图，未解之谜
-        this.bufferList.push(buffer);
-        if(this.bufferList.length > 1){
-            var bb = this.bufferList.shift();
-            this.gl.deleteBuffer(bb);
-        }
+    v3Tov2(v3, mesh){
+        var that = this;
+
+        var vpMatrix = that.camera.VPmatrix.clone();
+        var v4 = vpMatrix.concat(mesh.matrixWorld).multiplyVector4(new Vector4(v3.x, v3.y, v3.z, 1));
+        var v3GL = new Vector3(v4.x/v4.w, v4.y/v4.w, v4.z/v4.w);
+        var v2GL = new Vector2(v3GL.x, v3GL.y);
+        var v2 = new Vector2((v2GL.x/2+0.5)*600, (0.5-v2GL.y/2)*600);
+
+        return v2;
+    }
+
+    drawTriangle(a,b,c, mesh){
+        var that = this;
+        var ctx = that.gl;
+
+        var a1 = that.v3Tov2(a, mesh);
+        var b1 = that.v3Tov2(b, mesh);
+        var c1 = that.v3Tov2(c, mesh);
+
+        ctx.fillStyle = '#ff0000';
+        ctx.beginPath();
+        ctx.moveTo(a1.x,a1.y);
+        ctx.lineTo(b1.x,b1.y);
+        ctx.lineTo(c1.x,c1.y);
+        ctx.closePath();
+        ctx.fill();
     }
 
     getAllObjList(obj, allObjList){

@@ -13,6 +13,7 @@ function Vector4( x, y, z, w ) {
 	this.z = z || 0;
 	this.w = ( w !== undefined ) ? w : 1;
 
+	this.elements = [this.x,this.y,this.z,this.w];
 }
 
 Object.assign( Vector4.prototype, {

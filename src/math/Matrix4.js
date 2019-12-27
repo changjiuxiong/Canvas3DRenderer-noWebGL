@@ -1,4 +1,5 @@
 import { Vector3 } from './Vector3.js';
+import { Vector4 } from './Vector4.js';
 
 /**
  * @author mrdoob / http://mrdoob.com/
@@ -82,6 +83,7 @@ Object.assign( Matrix4.prototype, {
         result[2] = p[0] * e[2] + p[1] * e[6] + p[2] * e[10] + p[3] * e[14];
         result[3] = p[0] * e[3] + p[1] * e[7] + p[2] * e[11] + p[3] * e[15];
 
+        v = new Vector4(result[0],result[1],result[2],result[3]);
         return v;
     },
 
