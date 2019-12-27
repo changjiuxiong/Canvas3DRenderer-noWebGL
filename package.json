@@ -1,0 +1,24 @@
+{
+  "name": "cool",
+  "version": "1.0.0",
+  "description": "javascript 3D library",
+  "main": "index.js",
+  "dependencies": {
+    "js-md5": "^0.7.3",
+    "webpack": "^4.29.6"
+  },
+  "devDependencies": {
+    "webpack-cli": "^3.3.0",
+    "webpack-dev-server": "^3.3.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/changjiuxiong/cool.js.git"
+  },
+  "author": "",
+  "license": "ISC"
+}

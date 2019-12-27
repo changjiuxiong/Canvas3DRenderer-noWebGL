@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>cool.js</title>
+<style>
+    html,body{
+        padding: 0 0 0 0;
+        margin: 0 0 0 0;
+    }
+</style>
+    <script src="../dist/bundle.js"></script>
+
+</head>
+<body  oncontextmenu=self.event.returnValue=false>
+    <canvas id="webgl" width="600" height="600">
+        Please use a browser that supports "canvas"
+    </canvas>
+    <div id="param">
+
+    </div>
+</body>
+<script src="../lib/dat.gui.min.js"></script>
+<script>
+
+    var material = new COOL.MeshLambertMaterial({color:[1,1,0,1]});
+    var materialPlane = new COOL.MeshLambertMaterial({color:[1,1,1,1]});
+
+    var plane = new COOL.Mesh({material:materialPlane});
+    plane.setPosition([0,-3,0]);
+    plane.setScale([20,1,15]);
+
+    var scene = new COOL.Scene();
+//    scene.add(plane);
+
+    var ambientLight = new COOL.AmbientLight({intensity: 1.0});
+    scene.add(ambientLight);
+
+    var directionalLight = new COOL.DirectionalLight({intensity: 1.0, direction: [0.5,0.8,0.2]});
+    scene.add(directionalLight);
+
+    var camera = new COOL.Camera(45,1,1,1000);
+    camera.setPosition([- 1.8, 0.9, 2.7 ]);
+
+    var cameraController = new COOL.CameraController(camera);
+    cameraController.update();
+
+    var renderer = new COOL.Renderer({
+        useShadow:false,
+        skyBox:[
+            './skyBox/Bridge2/posx.jpg',
+            './skyBox/Bridge2/negx.jpg',
+            './skyBox/Bridge2/posy.jpg',
+            './skyBox/Bridge2/negy.jpg',
+            './skyBox/Bridge2/posz.jpg',
+            './skyBox/Bridge2/negz.jpg'
+        ],
+        useSkyBox:true,
+    });
+
+//    var loader = new COOL.GLTFLoader2();
+//    loader.load( "./models/gltf/DamagedHelmet/DamagedHelmet.gltf", function( gltf ) {
+//        scene.add(gltf);
+//    } );
+
+    var loader1 = new COOL.GLTFLoader2();
+    loader1.load( "./models/gltf/DamagedHelmet/DamagedHelmet.gltf", function( gltf ) {
+//       gltf.setPosition([2,0,0]);
+        for(var i in gltf.children){
+            scene.add(gltf.children[i]);
+        }
+
+    } );
+
+//    var loader = new COOL.GLTFLoader2();
+//    loader.load( "./models/Horse.glb", function( gltf ) {
+//
+//        gltf.setPosition([5,0,0]);
+//       var scale = 0.1;
+//        gltf.setScale([scale,scale,scale]);
+//       scene.add(gltf);
+//
+//    } );
+
+    function renderLoop() {
+       renderer.render(scene,camera);
+       requestAnimationFrame(function () {
+           renderLoop();
+       });
+    }
+
+    renderLoop();
+
+function createPanel() {
+
+    var panel = new dat.GUI( { width: 200 } );
+
+    var folder1 = panel.addFolder( '选项' );
+
+    var settings = {
+        '阴影': false,
+        '环境光': 1,
+        '平行光': 1,
+        '天空盒': true
+    };
+
+    folder1.add( settings, '阴影' ).onChange( showShadow );
+    folder1.add( settings, '环境光', 0, 1.5  ).onChange( changeAmb);
+    folder1.add( settings, '平行光', 0, 1.5  ).onChange( changeDir);
+    folder1.add( settings, '天空盒').onChange( showSkyBox );
+
+    folder1.open();
+
+}
+createPanel();
+
+function showShadow(v) {
+    renderer.useShadow = v;
+}
+
+function changeAmb(v) {
+    ambientLight.intensity = v;
+}
+
+function changeDir(v) {
+    directionalLight.intensity = v;
+}
+
+function showSkyBox(v) {
+    renderer.useSkyBox = v;
+}
+
+</script>
+</html>

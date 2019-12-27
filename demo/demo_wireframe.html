@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>cool.js</title>
+<style>
+    html,body{
+        padding: 0 0 0 0;
+        margin: 0 0 0 0;
+    }
+</style>
+    <script src="../dist/bundle.js"></script>
+
+</head>
+<body  oncontextmenu=self.event.returnValue=false>
+    <canvas id="webgl" width="600" height="600">
+        Please use a browser that supports "canvas"
+    </canvas>
+    <div id="param">
+
+    </div>
+</body>
+<script src="../lib/dat.gui.min.js"></script>
+<script>
+//    document.getElementById('test').innerHTML = new POINT(1,2).toString();
+
+    var material = new COOL.MeshBasicMaterial({color:[1,0,0,1], wireframe:true});
+    var material1 = new COOL.MeshBasicMaterial({color:[1,1,0,0.5], wireframe:true});
+    var materialPlane = new COOL.MeshBasicMaterial({color:[1,1,1,1], wireframe:true});
+    var materialSphere = new COOL.MeshBasicMaterial({color:[0,1,0,1], wireframe:true});
+    var materialStandard = new COOL.MeshBasicMaterial({color:[0,1,1,0.5], wireframe:true});
+    var materialGltf = new COOL.MeshBasicMaterial({color:[1,0,1,1], wireframe:true});
+
+
+
+    var image = new Image();
+    image.crossOrigin = "anonymous";
+    // image.src='http://www.thingjs.com/citybuilder_console/upload/project/images/projectPic_lcj_1553834866825.png';
+    image.src='./img/head.jpg';
+
+    var texture = new COOL.Texture({image:image});
+
+    var material2 = new COOL.MeshLambertMaterial({map:texture, wireframe:true});
+
+    var plane = new COOL.Mesh({material:materialPlane, geometry:new COOL.BoxGeometry()});
+    plane.setPosition([0,-3,0]);
+    plane.setScale([20,1,15]);
+
+
+    var mesh = new COOL.Mesh({material:material, geometry:new COOL.BoxGeometry()});
+    mesh.setPosition([0,0,0]);
+    mesh.setScale([1,1,1]);
+
+    var mesh1 = new COOL.Mesh({material:material1, geometry:new COOL.BoxGeometry()});
+    mesh1.setPosition([3,0,0]);
+    mesh1.setScale([1,1,1]);
+
+
+    var mesh2 = new COOL.Mesh({material:material2, geometry:new COOL.BoxGeometry()});
+    mesh2.setPosition([3,0,0]);
+    mesh2.setRotation([0,0,0]);
+    mesh2.setScale([1,1,1]);
+
+    var mesh3 = new COOL.Mesh({material:materialStandard, geometry:new COOL.BoxGeometry()});
+    mesh3.setPosition([0,0,3]);
+    mesh3.setScale([1,1,1]);
+
+    var meshSphere = new COOL.Mesh({material:materialSphere, geometry: new COOL.SphereGeometry(0.5,10,10)});
+    meshSphere.setPosition([3,3,3]);
+    meshSphere.setScale([1,1,1]);
+
+
+
+
+
+var scene = new COOL.Scene();
+
+    scene.add(mesh);
+    mesh.add(mesh1);
+    mesh1.add(mesh2);
+
+    scene.add(plane);
+    scene.add(mesh3);
+    scene.add(meshSphere);
+
+//scene.add(mesh2);
+
+    var ambientLight = new COOL.AmbientLight({intensity: 1.0});
+    scene.add(ambientLight);
+
+    var directionalLight = new COOL.DirectionalLight({intensity: 1.0, direction: [0.5,0.8,0.2]});
+    scene.add(directionalLight);
+
+    var camera = new COOL.Camera(30,1,1,1000);
+//    var camera = new COOL.OrthoCamera(-10, 10, -10, 10, 0, 100000);
+
+    camera.setPosition([5, 8, 35]);
+
+    var cameraController = new COOL.CameraController(camera);
+    cameraController.update();
+
+    var renderer = new COOL.Renderer({
+        useShadow:false,
+//        skyBox:[
+//            './skyBox/sky2/1_LF.jpg',
+//            './skyBox/sky2/1_DN.jpg',
+//            './skyBox/sky2/1_FR.jpg',
+//            './skyBox/sky2/1_RT.jpg',
+//            './skyBox/sky2/1_UP.jpg',
+//            './skyBox/sky2/1_BK.jpg',
+//        ],
+        skyBox:[
+            './skyBox/sky2/1_RT.jpg',
+            './skyBox/sky2/1_LF.jpg',
+            './skyBox/sky2/1_UP.jpg',
+            './skyBox/sky2/1_DN.jpg',
+            './skyBox/sky2/1_BK.jpg',
+            './skyBox/sky2/1_FR.jpg',
+        ],
+        useSkyBox:true,
+    });
+    /*
+    * px
+    * nx
+    * py
+    * ny
+    * pz
+    * nz
+    *
+    * */
+
+
+    var loader = new COOL.GLTFLoader2();
+    loader.load( "./models/gltf/girl.gltf", function( gltf ) {
+
+        for(var i in gltf.children){
+            gltf.children[i].setPosition([-5,-2,0]);
+            var scale = 5;
+            gltf.children[i].setScale([scale,scale,scale]);
+            gltf.children[i].rotateX(-1.57);
+            gltf.children[i].rotateZ(3.14);
+            gltf.children[i].material.wireframe=true;
+            scene.add(gltf.children[i]);
+        }
+
+    } );
+
+    function renderLoop() {
+       renderer.render(scene,camera);
+       mesh.rotateX(0.03);
+       mesh1.rotateZ(0.03);
+       mesh2.rotateY(0.03);
+
+       mesh3.rotateZ(0.03);
+       requestAnimationFrame(function () {
+           renderLoop();
+       });
+    }
+
+    renderLoop();
+
+function createPanel() {
+
+    var panel = new dat.GUI( { width: 200 } );
+
+    var folder1 = panel.addFolder( '选项' );
+
+    var settings = {
+        '阴影': false,
+        '环境光': 1,
+        '平行光': 1,
+        '天空盒': true
+    };
+
+    folder1.add( settings, '阴影' ).onChange( showShadow );
+    folder1.add( settings, '环境光', 0, 1.5  ).onChange( changeAmb);
+    folder1.add( settings, '平行光', 0, 1.5  ).onChange( changeDir);
+    folder1.add( settings, '天空盒').onChange( showSkyBox );
+
+    folder1.open();
+
+}
+createPanel();
+
+function showShadow(v) {
+    renderer.useShadow = v;
+}
+
+function changeAmb(v) {
+    ambientLight.intensity = v;
+}
+
+function changeDir(v) {
+    directionalLight.intensity = v;
+}
+
+function showSkyBox(v) {
+    renderer.useSkyBox = v;
+}
+
+</script>
+</html>

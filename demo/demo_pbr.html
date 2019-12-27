@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>cool.js</title>
+<style>
+    html,body{
+        padding: 0 0 0 0;
+        margin: 0 0 0 0;
+    }
+</style>
+    <script src="../dist/bundle.js"></script>
+
+</head>
+<body  oncontextmenu=self.event.returnValue=false>
+    <canvas id="webgl" width="600" height="600">
+        Please use a browser that supports "canvas"
+    </canvas>
+    <div id="param">
+
+    </div>
+</body>
+<script src="../lib/dat.gui.min.js"></script>
+<script>
+
+    var materialStandard = new COOL.MeshStandardMaterial({color:[1,1,1,1]});
+
+
+    var mesh = new COOL.Mesh({material:materialStandard, geometry:new COOL.SphereGeometry( 1, 48, 24 )});
+    mesh.setPosition([0,0,0]);
+
+    var scene = new COOL.Scene();
+
+    scene.add(mesh);
+
+    var ambientLight = new COOL.AmbientLight({intensity: 1.0});
+    // scene.add(ambientLight);
+
+    var directionalLight = new COOL.DirectionalLight({intensity: 1.0, direction: [1,2,3]});
+    scene.add(directionalLight);
+
+    var camera = new COOL.Camera(70,1,1,1000);
+    camera.setPosition([3,3,3]);
+    var cameraController = new COOL.CameraController(camera);
+    cameraController.update();
+
+    var renderer = new COOL.Renderer({useShadow:false});
+
+    function renderLoop() {
+       renderer.render(scene,camera);
+//       mesh.rotateX(0.03);
+       requestAnimationFrame(function () {
+           renderLoop();
+       });
+    }
+
+    renderLoop();
+
+function createPanel() {
+
+    var panel = new dat.GUI( { width: 200 } );
+
+    var folder1 = panel.addFolder( '选项' );
+
+    var settings = {
+        '阴影': true
+    };
+
+    folder1.add( settings, '阴影' ).onChange( showShadow );
+
+    folder1.open();
+
+}
+// createPanel();
+
+function showShadow(v) {
+    renderer.useShadow = v;
+}
+
+</script>
+</html>
