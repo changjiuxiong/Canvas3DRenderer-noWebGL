@@ -1,13 +1,13 @@
-# cool.js
+# Canvas3DRenderer-noWebGL
 
 #### 介绍
-javascript 3D library
-WebGL轻量级框架
-demo地址：http://changjiuxiong.gitee.io/cool.js/
+javascript canvas 3D library
+javascript canvas轻量级框架
+demo地址：
 
 #### 软件架构
 
-基于原生WebGL
+基于canvas 2D API
 
 #### 安装教程
 
@@ -16,7 +16,7 @@ demo地址：http://changjiuxiong.gitee.io/cool.js/
 
 #### 使用说明
 
-1. demo地址：http://changjiuxiong.gitee.io/cool.js/
+1. demo地址：
 
 #### 参与贡献
 
