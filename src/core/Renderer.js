@@ -88,19 +88,6 @@ class Renderer {
         gl.program = program;
     }
 
-    getCameraLight(directionalLight){
-        var cameraLight = new COOL.OrthoCamera(-100, 100, -100, 100, 0, 300);
-
-        var caPos = directionalLight.direction;
-        caPos = caPos.map(function (item) {
-            return item * 100;
-        });
-        cameraLight.setPosition(caPos);
-        cameraLight.setTarget([0,0,0]);
-
-        return cameraLight;
-    }
-
     render(scene, camera){
         var that = this;
         that.curCameraPosition = camera.position;
@@ -146,7 +133,6 @@ class Renderer {
         var geometry = mesh.geometry;
         var material = mesh.material;
         var map = material.map;
-        var envMap = material.envMap;
         var color = material.color;
 
         var v = material.vshaderSource;
