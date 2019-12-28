@@ -119,13 +119,146 @@ class Renderer {
         var c1 = that.v3Tov2(c, mesh);
 
         ctx.fillStyle = '#ff0000';
+        ctx.strokeStyle = '#ff0000';
+        // ctx.beginPath();
+        // ctx.moveTo(a1.x,a1.y);
+        // ctx.lineTo(b1.x,b1.y);
+        // ctx.lineTo(c1.x,c1.y);
+        // ctx.closePath();
+        // ctx.stroke();
+
+        function sortTByY(a,b) {
+            return a.y - b.y;
+        }
+
+        var triangleList = [a1,b1,c1].sort(sortTByY);
+        var a2 = triangleList[0];
+        var b2 = triangleList[1];
+        var c2 = triangleList[2];
+        var flatTop,flatBottom;
+        if(b2.y == a2.y){
+            flatTop = [c2,a2,b2];
+        }else if(b2.y == c2.y){
+            flatBottom = [a2,b2,c2];
+        }else{
+            var alpha = (b2.y-a2.y)/(c2.y-a2.y);
+            var ac = new Vector2().subVectors(c2,a2);
+            var d = a2.clone().addScaledVector(ac, alpha);
+
+            flatBottom = [a2,b2,d];
+            flatTop = [c2,b2,d];
+        }
+
+        // if(flatBottom){
+        //     that.drawFlatBottom(flatBottom,mesh);
+        // }
+        // if(flatTop){
+        //     that.drawFlatTop(flatTop,mesh);
+        // }
+
+        if(flatBottom){
+            that.drawT(flatBottom);
+        }
+        if(flatTop){
+            that.drawT(flatTop);
+        }
+    }
+
+    drawT(t){
+        var that = this;
+        var ctx = that.gl;
+
+        var a1 = t[0];
+        var b1 = t[1];
+        var c1 = t[2];
+
+        ctx.fillStyle = '#ff0000';
+        ctx.strokeStyle = '#ff0000';
         ctx.beginPath();
         ctx.moveTo(a1.x,a1.y);
         ctx.lineTo(b1.x,b1.y);
         ctx.lineTo(c1.x,c1.y);
         ctx.closePath();
         ctx.stroke();
-        // ctx.fill();
+    }
+
+    drawFlatTop(t, mesh){
+        var that = this;
+        var ctx = that.gl;
+
+        var a = t[0];
+        var b = t[1];
+        var c = t[2];
+
+        if(t[1].x<t[2].x){
+            b = t[1];
+            c = t[2];
+        }else{
+            c = t[1];
+            b = t[2];
+        }
+
+        var startY = Math.round(a.y);
+        var endY = Math.round(b.y);
+        var height = startY - endY;
+
+        var ab = new Vector2().subVectors(b,a);
+        var ac = new Vector2().subVectors(c,a);
+        for(var y=startY; y>=endY; y--){
+
+            var alpha = (startY-y)/height;
+            var startV2 = a.addScaledVector(ab,alpha);
+            var endV2 = a.addScaledVector(ac,alpha);
+            var startX = Math.round(startV2.x);
+            var endX = Math.round(endV2.x);
+
+            for(var x=startX; x<=endX; x++){
+                ctx.fillRect(x,y,1,1);
+            }
+        }
+    }
+
+    drawFlatBottom(t, mesh){
+        var that = this;
+        var ctx = that.gl;
+
+        var a = t[0];
+        var b;
+        var c;
+
+        if(t[1].x<t[2].x){
+            b = t[1];
+            c = t[2];
+        }else{
+            c = t[1];
+            b = t[2];
+        }
+
+        var startY = Math.round(a.y);
+        var endY = Math.round(b.y);
+        var height = endY - startY;
+
+        if(height<=0){
+            return;
+        }
+
+        var ab = new Vector2().subVectors(b,a);
+        var ac = new Vector2().subVectors(c,a);
+
+        var a0 = a.clone();
+        for(var y=startY; y<=endY; y++){
+
+            var alpha = (y-startY)/height;
+            var startV2 = a0.addScaledVector(ab,alpha);
+            var endV2 = a0.addScaledVector(ac,alpha);
+            var startX = Math.round(startV2.x);
+            var endX = Math.round(endV2.x);
+
+            for(var x=startX; x<=endX; x++){
+                ctx.fillRect(x,y,1,1);
+            }
+        }
+
     }
 
     getAllObjList(obj, allObjList){
