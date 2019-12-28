@@ -149,19 +149,19 @@ class Renderer {
             flatTop = [c2,b2,d];
         }
 
-        // if(flatBottom){
-        //     that.drawFlatBottom(flatBottom,mesh);
-        // }
-        // if(flatTop){
-        //     that.drawFlatTop(flatTop,mesh);
-        // }
-
         if(flatBottom){
-            that.drawT(flatBottom);
+            that.drawFlatBottom(flatBottom,mesh);
         }
         if(flatTop){
-            that.drawT(flatTop);
+            that.drawFlatTop(flatTop,mesh);
         }
+
+        // if(flatBottom){
+        //     that.drawT(flatBottom);
+        // }
+        // if(flatTop){
+        //     that.drawT(flatTop);
+        // }
     }
 
     drawT(t){
@@ -202,17 +202,22 @@ class Renderer {
         var endY = Math.round(b.y);
         var height = startY - endY;
 
+        if(height<=0){
+            return;
+        }
+
         var ab = new Vector2().subVectors(b,a);
         var ac = new Vector2().subVectors(c,a);
         for(var y=startY; y>=endY; y--){
 
             var alpha = (startY-y)/height;
-            var startV2 = a.addScaledVector(ab,alpha);
-            var endV2 = a.addScaledVector(ac,alpha);
+            var startV2 = a.clone().addScaledVector(ab,alpha);
+            var endV2 = a.clone().addScaledVector(ac,alpha);
             var startX = Math.round(startV2.x);
             var endX = Math.round(endV2.x);
 
             for(var x=startX; x<=endX; x++){
+                ctx.fillStyle = 'rgb('+x+','+y+',0)';
                 ctx.fillRect(x,y,1,1);
             }
         }
@@ -245,16 +250,16 @@ class Renderer {
         var ab = new Vector2().subVectors(b,a);
         var ac = new Vector2().subVectors(c,a);
 
-        var a0 = a.clone();
         for(var y=startY; y<=endY; y++){
 
             var alpha = (y-startY)/height;
-            var startV2 = a0.addScaledVector(ab,alpha);
-            var endV2 = a0.addScaledVector(ac,alpha);
+            var startV2 = a.clone().addScaledVector(ab,alpha);
+            var endV2 = a.clone().addScaledVector(ac,alpha);
             var startX = Math.round(startV2.x);
             var endX = Math.round(endV2.x);
 
             for(var x=startX; x<=endX; x++){
+                ctx.fillStyle = 'rgb('+x+','+y+',0)';
                 ctx.fillRect(x,y,1,1);
             }
         }
