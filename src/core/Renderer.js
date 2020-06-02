@@ -44,9 +44,9 @@ class Renderer {
         var directionalLight = null;
 
         for(var i in scene.lights){
-            if(scene.lights[i].type == 'DirectionalLight'){
+            if(scene.lights[i].type === 'DirectionalLight'){
                 directionalLight = scene.lights[i];
-            }else if(scene.lights[i].type == 'AmbientLight'){
+            }else if(scene.lights[i].type === 'AmbientLight'){
                 ambientLight = scene.lights[i];
             }
         }
@@ -136,9 +136,9 @@ class Renderer {
         var b2 = triangleList[1];
         var c2 = triangleList[2];
         var flatTop,flatBottom;
-        if(b2.y == a2.y){
+        if(b2.y === a2.y){
             flatTop = [c2,a2,b2];
-        }else if(b2.y == c2.y){
+        }else if(b2.y === c2.y){
             flatBottom = [a2,b2,c2];
         }else{
             var alpha = (b2.y-a2.y)/(c2.y-a2.y);
@@ -150,18 +150,12 @@ class Renderer {
         }
 
         if(flatBottom){
-            that.drawFlatBottom(flatBottom,mesh);
+            that.drawFlatT(flatBottom,mesh);
         }
         if(flatTop){
-            that.drawFlatTop(flatTop,mesh);
+            that.drawFlatT(flatTop,mesh);
         }
 
-        // if(flatBottom){
-        //     that.drawT(flatBottom);
-        // }
-        // if(flatTop){
-        //     that.drawT(flatTop);
-        // }
     }
 
     drawT(t){
@@ -182,54 +176,7 @@ class Renderer {
         ctx.stroke();
     }
 
-    drawFlatTop(t, mesh){
-        var that = this;
-        var ctx = that.gl;
-
-        var a = t[0];
-        var b = t[1];
-        var c = t[2];
-
-        if(t[1].x<t[2].x){
-            b = t[1];
-            c = t[2];
-        }else{
-            c = t[1];
-            b = t[2];
-        }
-
-        var startY = Math.round(a.y);
-        var endY = Math.round(b.y);
-        var height = startY - endY;
-
-        if(height<=0){
-            return;
-        }
-
-        var ab = new Vector2().subVectors(b,a);
-        var ac = new Vector2().subVectors(c,a);
-        for(var y=startY; y>=endY; y--){
-            if(y<0||y>600){
-                continue;
-            }
-
-            var alpha = (startY-y)/height;
-            var startV2 = a.clone().addScaledVector(ab,alpha);
-            var endV2 = a.clone().addScaledVector(ac,alpha);
-            var startX = Math.round(startV2.x);
-            var endX = Math.round(endV2.x);
-
-            for(var x=startX; x<=endX; x++){
-                if(x<0||x>600){
-                    continue;
-                }
-                ctx.fillStyle = 'rgb('+x+','+y+',0)';
-                ctx.fillRect(x,y,1,1);
-            }
-        }
-    }
-
-    drawFlatBottom(t, mesh){
+    drawFlatT(t, mesh){
         var that = this;
         var ctx = that.gl;
 
@@ -247,21 +194,22 @@ class Renderer {
 
         var startY = Math.round(a.y);
         var endY = Math.round(b.y);
-        var height = endY - startY;
-
-        if(height<=0){
-            return;
-        }
+        var height = Math.abs(endY - startY);
 
         var ab = new Vector2().subVectors(b,a);
         var ac = new Vector2().subVectors(c,a);
 
-        for(var y=startY; y<=endY; y++){
+        let dy = 1;
+        if(endY<startY){
+            dy = -1;
+        }
+
+        for(var y=startY; (y-startY)*(y-endY)<=0; y+=dy){
             if(y<0||y>600){
                 continue;
             }
 
-            var alpha = (y-startY)/height;
+            var alpha = Math.abs(y-startY)/height;
             var startV2 = a.clone().addScaledVector(ab,alpha);
             var endV2 = a.clone().addScaledVector(ac,alpha);
             var startX = Math.round(startV2.x);
