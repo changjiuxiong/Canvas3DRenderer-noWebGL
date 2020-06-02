@@ -1,4 +1,3 @@
-
 import Renderer from './core/Renderer.js';
 import Mesh from "./core/Mesh.js";
 import Camera from "./camera/Camera.js";
@@ -19,15 +18,10 @@ import SphereGeometry from "./core/SphereGeometry";
 import GLTFLoader from "./core/GLTFLoader2";
 
 import OrthoCamera from "./camera/OrthoCamera";
-import Animation from "./animation/Animation";
-import {Raycaster} from "./core/Raycaster";
 
 import {Vector2} from "./math/Vector2";
 import {Vector3} from "./math/Vector3";
-import {ExtrudeGeometry} from "./loader/ExtrudeGeometry";
-import {ExtrudeBufferGeometry} from "./loader/ExtrudeGeometry";
-import {Shape} from "./extras/core/Shape.js";
-import TextGeometry from "./core/TextGeometry";
+
 import CubeTexture from "./material/CubeTexture";
 
 
@@ -64,15 +58,7 @@ COOL.SphereGeometry = SphereGeometry;
 // COOL.GLTFLoader = _GLTFLoader;
 COOL.GLTFLoader2 = GLTFLoader;
 
-COOL.Animation = Animation;
-
-COOL.Raycaster = Raycaster;
-
 COOL.Vector2 = Vector2;
 COOL.Vector3 = Vector3;
 
-COOL.ExtrudeGeometry = ExtrudeGeometry;
-COOL.ExtrudeBufferGeometry = ExtrudeBufferGeometry;
-COOL.TextGeometry = TextGeometry;
-COOL.Shape = Shape;
 
