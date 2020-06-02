@@ -4,7 +4,6 @@
   "description": "javascript 3D library",
   "main": "index.js",
   "dependencies": {
-    "js-md5": "^0.7.3",
     "webpack": "^4.29.6"
   },
   "devDependencies": {
