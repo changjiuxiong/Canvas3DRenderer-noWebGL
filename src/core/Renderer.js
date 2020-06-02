@@ -38,7 +38,9 @@ class Renderer {
 
         var gl = that.gl;
 
-        gl.clearRect(0,0,600,600);
+        // gl.clearRect(0,0,600,600);
+        gl.fillStyle="black";
+        gl.fillRect(0,0,600,600);
 
         var ambientLight = null;
         var directionalLight = null;
@@ -67,6 +69,7 @@ class Renderer {
         var geometry = mesh.geometry;
         var indices = geometry.indices;
         var vertices = geometry.vertices;
+        var uv = geometry.uv;
 
 
         var material = mesh.material;
@@ -75,23 +78,41 @@ class Renderer {
 
         var ctx = that.gl;
 
-        for(var i=0; i<indices.length; i+=3){
-            var point1x = vertices[indices[i]*3];
-            var point1y = vertices[indices[i]*3+1];
-            var point1z = vertices[indices[i]*3+2];
+        for(let i=0; i<indices.length; i+=3){
+            let point1x = vertices[indices[i]*3];
+            let point1y = vertices[indices[i]*3+1];
+            let point1z = vertices[indices[i]*3+2];
 
-            var point2x = vertices[indices[i+1]*3];
-            var point2y = vertices[indices[i+1]*3+1];
-            var point2z = vertices[indices[i+1]*3+2];
+            let point1s = uv[indices[i]*2];
+            let point1t = uv[indices[i]*2+1];
 
-            var point3x = vertices[indices[i+2]*3];
-            var point3y = vertices[indices[i+2]*3+1];
-            var point3z = vertices[indices[i+2]*3+2];
+            let point1 = new Vector3(point1x,point1y,point1z);
+            point1.uv = new Vector2(point1s,point1t);
+
+            let point2x = vertices[indices[i+1]*3];
+            let point2y = vertices[indices[i+1]*3+1];
+            let point2z = vertices[indices[i+1]*3+2];
+
+            let point2s = uv[indices[i+1]*2];
+            let point2t = uv[indices[i+1]*2+1];
+
+            let point2 = new Vector3(point2x,point2y,point2z);
+            point2.uv = new Vector2(point2s,point2t);
+
+            let point3x = vertices[indices[i+2]*3];
+            let point3y = vertices[indices[i+2]*3+1];
+            let point3z = vertices[indices[i+2]*3+2];
+
+            let point3s = uv[indices[i+2]*2];
+            let point3t = uv[indices[i+2]*2+1];
+
+            let point3 = new Vector3(point3x,point3y,point3z);
+            point3.uv = new Vector2(point3s,point3t);
 
             that.drawTriangle(
-                new Vector3().fromArray([point1x,point1y,point1z]),
-                new Vector3().fromArray([point2x,point2y,point2z]),
-                new Vector3().fromArray([point3x,point3y,point3z]),
+                point1,
+                point2,
+                point3,
                 mesh
             );
         }
@@ -107,6 +128,8 @@ class Renderer {
         var v2GL = new Vector2(v3GL.x, v3GL.y);
         var v2 = new Vector2((v2GL.x/2+0.5)*600, (0.5-v2GL.y/2)*600);
 
+        v2.uv = v3.uv;
+
         return v2;
     }
 
@@ -120,12 +143,6 @@ class Renderer {
 
         ctx.fillStyle = '#ff0000';
         ctx.strokeStyle = '#ff0000';
-        // ctx.beginPath();
-        // ctx.moveTo(a1.x,a1.y);
-        // ctx.lineTo(b1.x,b1.y);
-        // ctx.lineTo(c1.x,c1.y);
-        // ctx.closePath();
-        // ctx.stroke();
 
         function sortTByY(a,b) {
             return a.y - b.y;
@@ -142,8 +159,8 @@ class Renderer {
             flatBottom = [a2,b2,c2];
         }else{
             var alpha = (b2.y-a2.y)/(c2.y-a2.y);
-            var ac = new Vector2().subVectors(c2,a2);
-            var d = a2.clone().addScaledVector(ac, alpha);
+
+            let d = that.getV2Linear(a2,c2,alpha);
 
             flatBottom = [a2,b2,d];
             flatTop = [c2,b2,d];
@@ -156,6 +173,18 @@ class Renderer {
             that.drawFlatT(flatTop,mesh);
         }
 
+    }
+
+    getV2Linear(a2,c2,alpha){
+        let ac = new Vector2().subVectors(c2,a2);
+        let d = a2.clone().addScaledVector(ac, alpha);
+
+        let auv = a2.uv.clone();
+        let cuv = c2.uv.clone();
+        let duv = new Vector2().addVectors(auv.multiplyScalar(1-alpha), cuv.multiplyScalar(alpha));
+        d.uv = duv;
+
+        return d;
     }
 
     drawT(t){
@@ -177,12 +206,12 @@ class Renderer {
     }
 
     drawFlatT(t, mesh){
-        var that = this;
-        var ctx = that.gl;
+        let that = this;
+        let ctx = that.gl;
 
-        var a = t[0];
-        var b;
-        var c;
+        let a = t[0];
+        let b;
+        let c;
 
         if(t[1].x<t[2].x){
             b = t[1];
@@ -192,34 +221,50 @@ class Renderer {
             b = t[2];
         }
 
-        var startY = Math.round(a.y);
-        var endY = Math.round(b.y);
-        var height = Math.abs(endY - startY);
+        let startY = Math.round(a.y);
+        let endY = Math.round(b.y);
+        let height = Math.abs(endY - startY);
 
-        var ab = new Vector2().subVectors(b,a);
-        var ac = new Vector2().subVectors(c,a);
 
         let dy = 1;
         if(endY<startY){
             dy = -1;
         }
 
-        for(var y=startY; (y-startY)*(y-endY)<=0; y+=dy){
+        for(let y=startY; (y-startY)*(y-endY)<=0; y+=dy){
             if(y<0||y>600){
                 continue;
             }
 
-            var alpha = Math.abs(y-startY)/height;
-            var startV2 = a.clone().addScaledVector(ab,alpha);
-            var endV2 = a.clone().addScaledVector(ac,alpha);
-            var startX = Math.round(startV2.x);
-            var endX = Math.round(endV2.x);
+            let alpha = Math.abs(y-startY)/height;
+            let startV2 = that.getV2Linear(a,b,alpha);
+            let endV2 = that.getV2Linear(a,c,alpha);
+            let startX = Math.round(startV2.x);
+            let endX = Math.round(endV2.x);
 
-            for(var x=startX; x<=endX; x++){
+            let width = endX - startX;
+
+            for(let x=startX; x<=endX; x++){
                 if(x<0||x>600){
                     continue;
                 }
-                ctx.fillStyle = 'rgb('+x+','+y+',0)';
+
+                let alphaX = Math.abs(x-startX)/width;
+                let point = that.getV2Linear(startV2,endV2,alphaX);
+
+                let color = mesh.material.color;
+                let color255;
+
+                if(color){
+                    color255 = [color[0]*255,color[1]*255,color[2]*255,color[3]];
+                }
+
+                let r = color255[0];
+                let g = color255[1];
+                let b = color255[2];
+
+                ctx.fillStyle = 'rgb('+r+','+g+','+b+')';
+
                 ctx.fillRect(x,y,1,1);
             }
         }
