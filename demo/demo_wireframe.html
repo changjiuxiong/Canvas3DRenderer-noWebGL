@@ -94,41 +94,13 @@ var scene = new COOL.Scene();
     var camera = new COOL.Camera(30,1,1,1000);
 //    var camera = new COOL.OrthoCamera(-10, 10, -10, 10, 0, 100000);
 
-    camera.setPosition([5, 8, 35]);
+    camera.setPosition([0, 30, 100]);
 
     var cameraController = new COOL.CameraController(camera);
     cameraController.update();
 
     var renderer = new COOL.Renderer({
-        useShadow:false,
-//        skyBox:[
-//            './skyBox/sky2/1_LF.jpg',
-//            './skyBox/sky2/1_DN.jpg',
-//            './skyBox/sky2/1_FR.jpg',
-//            './skyBox/sky2/1_RT.jpg',
-//            './skyBox/sky2/1_UP.jpg',
-//            './skyBox/sky2/1_BK.jpg',
-//        ],
-        skyBox:[
-            './skyBox/sky2/1_RT.jpg',
-            './skyBox/sky2/1_LF.jpg',
-            './skyBox/sky2/1_UP.jpg',
-            './skyBox/sky2/1_DN.jpg',
-            './skyBox/sky2/1_BK.jpg',
-            './skyBox/sky2/1_FR.jpg',
-        ],
-        useSkyBox:true,
     });
-    /*
-    * px
-    * nx
-    * py
-    * ny
-    * pz
-    * nz
-    *
-    * */
-
 
     var loader = new COOL.GLTFLoader2();
     loader.load( "./models/gltf/girl.gltf", function( gltf ) {

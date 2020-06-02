@@ -1,6 +1,4 @@
 import {Vector3} from "../math/Vector3";
-import {Sphere} from "../math/Sphere";
-import {Box3} from "../math/Box3";
 
 class Geometry {
     constructor(param) {
@@ -49,10 +47,6 @@ class Geometry {
 
 
         this.morphAttributes = param.morphAttributes;
-
-        this.boundingSphere = new Sphere();
-        this.boundingBox = new Box3();
-        this.computeBoundingBox();
 
         // this.updateNormal();
 
@@ -103,14 +97,6 @@ class Geometry {
         }
         this.normal = new Float32Array(normal);
 
-    }
-
-    computeBoundingBox () {
-        var verticesV3 = [];
-        for(var i=0; i<this.vertices.length; i+=3){
-            verticesV3.push(new Vector3(this.vertices[i], this.vertices[i+1], this.vertices[i+2]))
-        }
-        this.boundingBox.setFromPoints(verticesV3);
     }
 
     clone(){

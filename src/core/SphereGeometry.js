@@ -1,6 +1,4 @@
 import {Vector3} from "../math/Vector3";
-import {Sphere} from "../math/Sphere";
-import {Box3} from "../math/Box3";
 
 class SphereGeometry {
     constructor( radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength ) {
@@ -115,18 +113,6 @@ class SphereGeometry {
 
         this.buffer = new Float32Array(buffer);
 
-        this.boundingSphere = new Sphere();
-        this.boundingBox = new Box3();
-        this.computeBoundingBox();
-
-    }
-
-    computeBoundingBox () {
-        var verticesV3 = [];
-        for(var i=0; i<this.vertices.length; i+=3){
-            verticesV3.push(new Vector3(this.vertices[i], this.vertices[i+1], this.vertices[i+2]))
-        }
-        this.boundingBox.setFromPoints(verticesV3);
     }
 
 }

@@ -22,9 +22,6 @@ import OrthoCamera from "./camera/OrthoCamera";
 import {Vector2} from "./math/Vector2";
 import {Vector3} from "./math/Vector3";
 
-import CubeTexture from "./material/CubeTexture";
-
-
 var COOL = window.COOL = {};
 
 COOL.LINEAR = 9729;
@@ -46,7 +43,6 @@ COOL.MeshLambertMaterial = MeshLambertMaterial;
 COOL.MeshStandardMaterial = MeshStandardMaterial;
 
 COOL.Texture = Texture;
-COOL.CubeTexture = CubeTexture;
 
 COOL.AmbientLight = AmbientLight;
 COOL.DirectionalLight = DirectionalLight;

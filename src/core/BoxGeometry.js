@@ -1,6 +1,4 @@
 import {Vector3} from "../math/Vector3";
-import {Sphere} from "../math/Sphere";
-import {Box3} from "../math/Box3";
 
 class BoxGeometry {
     constructor(param) {
@@ -36,11 +34,6 @@ class BoxGeometry {
             16,17,18,  16,18,19,    // down
             20,21,22,  20,22,23     // back
         ]);
-
-        this.boundingSphere = new Sphere();
-        this.boundingBox = new Box3();
-        this.computeBoundingBox();
-        // this.computeBoundingSphere();
 
         this.updateNormal();
 
@@ -93,21 +86,6 @@ class BoxGeometry {
 
     }
 
-    computeBoundingSphere(){
-
-        // if ( this.boundingSphere === null ) {
-        //     this.boundingSphere = new Sphere();
-        // }
-        // this.boundingSphere.setFromPoints( this.vertices );
-    }
-
-    computeBoundingBox () {
-        var verticesV3 = [];
-        for(var i=0; i<this.vertices.length; i+=3){
-            verticesV3.push(new Vector3(this.vertices[i], this.vertices[i+1], this.vertices[i+2]))
-        }
-        this.boundingBox.setFromPoints(verticesV3);
-    }
 
     clone(){
         var geometry = new BoxGeometry({
