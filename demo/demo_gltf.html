@@ -9,7 +9,7 @@
         margin: 0 0 0 0;
     }
 </style>
-    <script src="../dist/bundle.js"></script>
+    <script src="../dist/cool.js"></script>
 
 </head>
 <body  oncontextmenu=self.event.returnValue=false>
@@ -20,7 +20,7 @@
 
     </div>
 </body>
-<script src="../lib/dat.gui.min.js"></script>
+
 <script>
 
     var material = new COOL.MeshLambertMaterial({color:[1,1,0,1]});
@@ -46,22 +46,9 @@
     cameraController.update();
 
     var renderer = new COOL.Renderer({
-        useShadow:false,
-        skyBox:[
-            './skyBox/Bridge2/posx.jpg',
-            './skyBox/Bridge2/negx.jpg',
-            './skyBox/Bridge2/posy.jpg',
-            './skyBox/Bridge2/negy.jpg',
-            './skyBox/Bridge2/posz.jpg',
-            './skyBox/Bridge2/negz.jpg'
-        ],
-        useSkyBox:true,
+
     });
 
-//    var loader = new COOL.GLTFLoader2();
-//    loader.load( "./models/gltf/DamagedHelmet/DamagedHelmet.gltf", function( gltf ) {
-//        scene.add(gltf);
-//    } );
 
     var loader1 = new COOL.GLTFLoader2();
     loader1.load( "./models/gltf/DamagedHelmet/DamagedHelmet.gltf", function( gltf ) {
@@ -72,15 +59,6 @@
 
     } );
 
-//    var loader = new COOL.GLTFLoader2();
-//    loader.load( "./models/Horse.glb", function( gltf ) {
-//
-//        gltf.setPosition([5,0,0]);
-//       var scale = 0.1;
-//        gltf.setScale([scale,scale,scale]);
-//       scene.add(gltf);
-//
-//    } );
 
     function renderLoop() {
        renderer.render(scene,camera);
@@ -90,45 +68,6 @@
     }
 
     renderLoop();
-
-function createPanel() {
-
-    var panel = new dat.GUI( { width: 200 } );
-
-    var folder1 = panel.addFolder( '选项' );
-
-    var settings = {
-        '阴影': false,
-        '环境光': 1,
-        '平行光': 1,
-        '天空盒': true
-    };
-
-    folder1.add( settings, '阴影' ).onChange( showShadow );
-    folder1.add( settings, '环境光', 0, 1.5  ).onChange( changeAmb);
-    folder1.add( settings, '平行光', 0, 1.5  ).onChange( changeDir);
-    folder1.add( settings, '天空盒').onChange( showSkyBox );
-
-    folder1.open();
-
-}
-createPanel();
-
-function showShadow(v) {
-    renderer.useShadow = v;
-}
-
-function changeAmb(v) {
-    ambientLight.intensity = v;
-}
-
-function changeDir(v) {
-    directionalLight.intensity = v;
-}
-
-function showSkyBox(v) {
-    renderer.useSkyBox = v;
-}
 
 </script>
 </html>

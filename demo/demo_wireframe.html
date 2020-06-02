@@ -9,7 +9,7 @@
         margin: 0 0 0 0;
     }
 </style>
-    <script src="../dist/bundle.js"></script>
+    <script src="../dist/cool.js"></script>
 
 </head>
 <body  oncontextmenu=self.event.returnValue=false>
@@ -20,9 +20,7 @@
 
     </div>
 </body>
-<script src="../lib/dat.gui.min.js"></script>
 <script>
-//    document.getElementById('test').innerHTML = new POINT(1,2).toString();
 
     var material = new COOL.MeshBasicMaterial({color:[1,0,0,1], wireframe:true});
     var material1 = new COOL.MeshBasicMaterial({color:[1,1,0,0.5], wireframe:true});
@@ -35,7 +33,6 @@
 
     var image = new Image();
     image.crossOrigin = "anonymous";
-    // image.src='http://www.thingjs.com/citybuilder_console/upload/project/images/projectPic_lcj_1553834866825.png';
     image.src='./img/head.jpg';
 
     var texture = new COOL.Texture({image:image});
@@ -130,45 +127,6 @@ var scene = new COOL.Scene();
     }
 
     renderLoop();
-
-function createPanel() {
-
-    var panel = new dat.GUI( { width: 200 } );
-
-    var folder1 = panel.addFolder( '选项' );
-
-    var settings = {
-        '阴影': false,
-        '环境光': 1,
-        '平行光': 1,
-        '天空盒': true
-    };
-
-    folder1.add( settings, '阴影' ).onChange( showShadow );
-    folder1.add( settings, '环境光', 0, 1.5  ).onChange( changeAmb);
-    folder1.add( settings, '平行光', 0, 1.5  ).onChange( changeDir);
-    folder1.add( settings, '天空盒').onChange( showSkyBox );
-
-    folder1.open();
-
-}
-createPanel();
-
-function showShadow(v) {
-    renderer.useShadow = v;
-}
-
-function changeAmb(v) {
-    ambientLight.intensity = v;
-}
-
-function changeDir(v) {
-    directionalLight.intensity = v;
-}
-
-function showSkyBox(v) {
-    renderer.useSkyBox = v;
-}
 
 </script>
 </html>
