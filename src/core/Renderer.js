@@ -209,6 +209,9 @@ class Renderer {
         var ab = new Vector2().subVectors(b,a);
         var ac = new Vector2().subVectors(c,a);
         for(var y=startY; y>=endY; y--){
+            if(y<0||y>600){
+                continue;
+            }
 
             var alpha = (startY-y)/height;
             var startV2 = a.clone().addScaledVector(ab,alpha);
@@ -217,6 +220,9 @@ class Renderer {
             var endX = Math.round(endV2.x);
 
             for(var x=startX; x<=endX; x++){
+                if(x<0||x>600){
+                    continue;
+                }
                 ctx.fillStyle = 'rgb('+x+','+y+',0)';
                 ctx.fillRect(x,y,1,1);
             }
@@ -251,6 +257,9 @@ class Renderer {
         var ac = new Vector2().subVectors(c,a);
 
         for(var y=startY; y<=endY; y++){
+            if(y<0||y>600){
+                continue;
+            }
 
             var alpha = (y-startY)/height;
             var startV2 = a.clone().addScaledVector(ab,alpha);
@@ -259,6 +268,9 @@ class Renderer {
             var endX = Math.round(endV2.x);
 
             for(var x=startX; x<=endX; x++){
+                if(x<0||x>600){
+                    continue;
+                }
                 ctx.fillStyle = 'rgb('+x+','+y+',0)';
                 ctx.fillRect(x,y,1,1);
             }
