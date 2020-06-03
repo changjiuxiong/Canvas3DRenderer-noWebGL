@@ -26,11 +26,28 @@ class Renderer {
         var canvas = document.getElementById('webgl');
         var gl = this.gl = canvas.getContext('2d');
 
+        this.depthData = [];
+
     }
 
+    initDepth(){
+        for(let i=0; i<600*600; i++){
+            this.depthData[i] = Infinity;
+        }
+    }
+
+    ckeckAndsetDepth(x,y,data){
+        let oldData = this.depthData[y*600+x];
+        if(data<oldData){
+            this.depthData[y*600+x] = data;
+            return true;
+        }
+        return false;
+    }
 
     render(scene, camera){
         var that = this;
+
         that.camera = camera;
         that.curCameraPosition = camera.position;
 
@@ -41,6 +58,8 @@ class Renderer {
         // gl.clearRect(0,0,600,600);
         gl.fillStyle="black";
         gl.fillRect(0,0,600,600);
+
+        this.initDepth();
 
         var ambientLight = null;
         var directionalLight = null;
@@ -129,6 +148,7 @@ class Renderer {
         var v2 = new Vector2((v2GL.x/2+0.5)*600, (0.5-v2GL.y/2)*600);
 
         v2.uv = v3.uv;
+        v2.v3 = v3GL;
 
         return v2;
     }
@@ -198,6 +218,11 @@ class Renderer {
         let cuv = c2.uv.clone();
         let duv = new Vector2().addVectors(auv.multiplyScalar(1-alpha), cuv.multiplyScalar(alpha));
         d.uv = duv;
+
+        let av3 = a2.v3.clone();
+        let cv3 = c2.v3.clone();
+        let dv3 = new Vector3().addVectors(av3.multiplyScalar(1-alpha), cv3.multiplyScalar(alpha));
+        d.v3 = dv3;
 
         return d;
     }
@@ -269,6 +294,11 @@ class Renderer {
 
                 let alphaX = Math.abs(x-startX)/width;
                 let point = that.getV2Linear(startV2,endV2,alphaX);
+
+                let check = this.ckeckAndsetDepth(x,y,point.v3.z);
+                if(!check){
+                    continue;
+                }
 
                 let color = mesh.material.color;
                 let color255;
