@@ -1,8 +1,10 @@
 # Canvas3DRenderer-noWebGL
 
 #### 介绍
+javascript canvas轻量级3d框架
+javascript 光栅化渲染器
+javascript rasterization renderer
 javascript canvas 3D library
-javascript canvas轻量级框架
 demo地址：http://changjiuxiong.gitee.io/canvas3drenderer-nowebgl/demo/index.html#demo_index
 
 ![截图](https://images.gitee.com/uploads/images/2019/1227/173234_b5aefa11_2665180.png "屏幕截图.png")
