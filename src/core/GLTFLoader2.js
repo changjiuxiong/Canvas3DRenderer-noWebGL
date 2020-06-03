@@ -50,7 +50,7 @@ class GLTFLoader{
                             that.arrayBuffers[i] = buffer;
                             loadBufferCount ++;
 
-                            if(loadBufferCount = that.arrayBufferCount){
+                            if(loadBufferCount === that.arrayBufferCount){
 
                                 var sceneObj = gltfObj.scenes[0];
                                 var scene = new Scene();
@@ -78,7 +78,7 @@ class GLTFLoader{
                             that.arrayBuffers[i] = buffer;
                             loadBufferCount ++;
 
-                            if(loadBufferCount = that.arrayBufferCount){
+                            if(loadBufferCount === that.arrayBufferCount){
 
                                 var sceneObj = gltfObj.scenes[0];
                                 var scene = new Scene();

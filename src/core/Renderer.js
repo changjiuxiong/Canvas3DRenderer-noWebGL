@@ -133,6 +133,17 @@ class Renderer {
         return v2;
     }
 
+    //背面剔除
+    checkClockwise(p1, p2, p3){
+        let isTriangleV2clockwise = false;
+
+        if ((p2.x - p1.x) *(p3.y - p1.y) -(p3.x - p1.x) *(p2.y-p1.y) < 0.0){
+            isTriangleV2clockwise = true;
+        }
+
+        return isTriangleV2clockwise;
+    }
+
     drawTriangle(a,b,c, mesh){
         var that = this;
         var ctx = that.gl;
@@ -140,6 +151,10 @@ class Renderer {
         var a1 = that.v3Tov2(a, mesh);
         var b1 = that.v3Tov2(b, mesh);
         var c1 = that.v3Tov2(c, mesh);
+
+        if(!that.checkClockwise(a1,b1,c1)){
+            return;
+        }
 
         ctx.fillStyle = '#ff0000';
         ctx.strokeStyle = '#ff0000';
@@ -243,6 +258,9 @@ class Renderer {
             let endX = Math.round(endV2.x);
 
             let width = endX - startX;
+            if(width === 0){
+                continue;
+            }
 
             for(let x=startX; x<=endX; x++){
                 if(x<0||x>600){
@@ -257,6 +275,11 @@ class Renderer {
 
                 if(color){
                     color255 = [color[0]*255,color[1]*255,color[2]*255,color[3]];
+                }
+
+                let tex = mesh.material.map;
+                if(tex && tex.ready){
+                    color255 = tex.getColorByUV(point.uv.x,point.uv.y);
                 }
 
                 let r = color255[0];

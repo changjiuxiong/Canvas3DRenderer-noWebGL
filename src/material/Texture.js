@@ -8,7 +8,11 @@ class Texture {
         this.magFilter = param.magFilter || COOL.NEAREST;
         this.minFilter = param.minFilter || COOL.NEAREST;
 
-        this.canvas = null;
+        this.imageData = null;
+        this.width = null;
+        this.height = null;
+
+        this.ready = false;
 
         this.initCanvas();
     }
@@ -16,13 +20,42 @@ class Texture {
     initCanvas(){
         let that = this;
         that.image.onload=function () {
+            let width = that.image.width;
+            let height = that.image.height;
             let canvas = document.createElement('canvas');
-            canvas.width = 100;
-            canvas.height = 100;
+            canvas.width = width;
+            canvas.height = height;
             let ctx = canvas.getContext("2d");
             ctx.drawImage(that.image, 0, 0);
-            let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            let imageData = ctx.getImageData(0, 0, width, height).data;
+
+            that.width = width;
+            that.height = height;
+            that.imageData = imageData;
+
+            that.ready = true;
         }
+    }
+
+    getColorByUV(s,t){
+
+        let u = s;
+        let v = t;
+
+        if(u>1){
+            u = u - Math.floor(u);
+        }
+        if(v>1){
+            v = v - Math.floor(v);
+        }
+
+        let index = Math.floor(v*this.height)*this.width*4 + Math.floor(u*this.width)*4;
+        let r = this.imageData[index];
+        let g = this.imageData[index+1];
+        let b = this.imageData[index+2];
+        let a = this.imageData[index+3];
+
+        return [r,g,b,a];
     }
 
     clone(){
