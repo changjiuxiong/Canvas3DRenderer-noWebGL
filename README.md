@@ -6,6 +6,7 @@ javascript canvas轻量级框架
 demo地址：http://changjiuxiong.gitee.io/canvas3drenderer-nowebgl/demo/index.html#demo_index
 
 ![截图](https://images.gitee.com/uploads/images/2019/1227/173234_b5aefa11_2665180.png "屏幕截图.png")
+![gltf渲染](https://images.gitee.com/uploads/images/2020/0603/111050_9e22b2bc_2665180.png "gltf.png")
 
 #### 软件架构
 
